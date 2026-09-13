@@ -1,0 +1,6 @@
+# agent files
+.cursor
+
+# build artifacts
+.cache
+build
