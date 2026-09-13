@@ -11,6 +11,8 @@ XNES
   <img src="https://img.shields.io/github/stars/srijxnnn/xnes?style=for-the-badge&color=FFD200&labelColor=111111&logo=github&logoColor=white" alt="stars">
 </p>
 
+> [!WARNING]
+> This repo is work in progess.
 
 XNES is a blazing fast and lightweight NES emulator, written in C++ and uses Qt for the UI. The goal of XNES is to support every possible NES game while being accurate.
 
