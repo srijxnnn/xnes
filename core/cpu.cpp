@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include <cstdint>
 
 void CPU::reset() {
   a_ = 0;
@@ -17,6 +18,10 @@ void CPU::step() {
   const uint8_t opcode = bus_.read(pc_++);
 
   switch (opcode) {
+  case 0x08: {
+    bus_.write(0x0100 | sp_--, p_ | 0x10);
+    break;
+  }
   case 0x10: {
     const uint8_t offset = bus_.read(pc_++);
     if ((p_ & 0x80) == 0) {
@@ -49,8 +54,23 @@ void CPU::step() {
     p_ |= mem & 0xC0;
     break;
   }
+  case 0x28: {
+    const uint8_t status = bus_.read(0x0100 | ++sp_);
+    p_ = (status & 0xCF) | (p_ & (~0xCF));
+    break;
+  }
+  case 0x29: {
+    const uint8_t op = bus_.read(pc_++);
+    a_ &= op;
+    set_zn_(a_);
+    break;
+  }
   case 0x38: {
     p_ |= 0x01;
+    break;
+  }
+  case 0x48: {
+    bus_.write(0x0100 | sp_--, a_);
     break;
   }
   case 0x4C: {
@@ -66,11 +86,28 @@ void CPU::step() {
     }
     break;
   }
+  case 0x60: {
+    const uint8_t lo = bus_.read(0x0100 | ++sp_);
+    const uint8_t hi = bus_.read(0x0100 | ++sp_);
+    pc_ = (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    pc_++;
+    break;
+  }
+  case 0x68: {
+    const uint8_t val = bus_.read(0x0100 | ++sp_);
+    a_ = val;
+    set_zn_(a_);
+    break;
+  }
   case 0x70: {
     const uint8_t offset = bus_.read(pc_++);
     if (p_ & 0x40) {
       pc_ = pc_ + static_cast<int8_t>(offset);
     }
+    break;
+  }
+  case 0x78: {
+    p_ |= 0x04;
     break;
   }
   case 0x85: {
@@ -109,11 +146,24 @@ void CPU::step() {
     }
     break;
   }
+  case 0xC9: {
+    const uint8_t op = bus_.read(pc_++);
+    const uint8_t result = a_ - op;
+    if (result >= 0) {
+      p_ |= 0x01;
+    }
+    set_zn_(result);
+    break;
+  }
   case 0xD0: {
     const uint8_t offset = bus_.read(pc_++);
     if ((p_ & 0x02) == 0) {
       pc_ = pc_ + static_cast<int8_t>(offset);
     }
+    break;
+  }
+  case 0xD8: {
+    p_ &= ~0x08;
     break;
   }
   case 0xEA: {
@@ -124,6 +174,10 @@ void CPU::step() {
     if (p_ & 0x02) {
       pc_ = pc_ + static_cast<int8_t>(offset);
     }
+    break;
+  }
+  case 0xF8: {
+    p_ |= 0x08;
     break;
   }
   default: {
