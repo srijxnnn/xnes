@@ -22,12 +22,17 @@ void CPU::step() {
     bus_.write(0x0100 | sp_--, p_ | 0x10);
     break;
   }
+  case 0x09: {
+    const uint8_t op = bus_.read(pc_++);
+    a_ |= op;
+    set_zn_(a_);
+    break;
+  }
   case 0x10: {
     const uint8_t offset = bus_.read(pc_++);
     if ((p_ & 0x80) == 0) {
       pc_ = pc_ + static_cast<int8_t>(offset);
     }
-    break;
     break;
   }
   case 0x18: {
@@ -65,6 +70,13 @@ void CPU::step() {
     set_zn_(a_);
     break;
   }
+  case 0x30: {
+    const uint8_t offset = bus_.read(pc_++);
+    if (p_ & 0x80) {
+      pc_ = pc_ + static_cast<int8_t>(offset);
+    }
+    break;
+  }
   case 0x38: {
     p_ |= 0x01;
     break;
@@ -77,6 +89,12 @@ void CPU::step() {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     pc_ = (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    break;
+  }
+  case 0x49: {
+    const uint8_t op = bus_.read(pc_++);
+    a_ ^= op;
+    set_zn_(a_);
     break;
   }
   case 0x50: {
@@ -96,6 +114,22 @@ void CPU::step() {
   case 0x68: {
     const uint8_t val = bus_.read(0x0100 | ++sp_);
     a_ = val;
+    set_zn_(a_);
+    break;
+  }
+  case 0x69: {
+    const uint8_t op = bus_.read(pc_++);
+    const uint16_t result = a_ + op + (p_ & 0x01);
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
     set_zn_(a_);
     break;
   }
@@ -146,11 +180,17 @@ void CPU::step() {
     }
     break;
   }
+  case 0xB8: {
+    p_ &= ~0x40;
+    break;
+  }
   case 0xC9: {
     const uint8_t op = bus_.read(pc_++);
     const uint8_t result = a_ - op;
-    if (result >= 0) {
+    if (a_ >= op) {
       p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
     }
     set_zn_(result);
     break;
