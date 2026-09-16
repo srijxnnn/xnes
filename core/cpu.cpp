@@ -161,6 +161,12 @@ void CPU::step() {
     }
     break;
   }
+  case 0xA0: {
+    const uint8_t op = bus_.read(pc_++);
+    y_ = op;
+    set_zn_(y_);
+    break;
+  }
   case 0xA2: {
     const uint8_t op = bus_.read(pc_++);
     x_ = op;
@@ -184,6 +190,17 @@ void CPU::step() {
     p_ &= ~0x40;
     break;
   }
+  case 0xC0: {
+    const uint8_t op = bus_.read(pc_++);
+    const uint8_t result = y_ - op;
+    if (y_ >= op) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    set_zn_(result);
+    break;
+  }
   case 0xC9: {
     const uint8_t op = bus_.read(pc_++);
     const uint8_t result = a_ - op;
@@ -204,6 +221,17 @@ void CPU::step() {
   }
   case 0xD8: {
     p_ &= ~0x08;
+    break;
+  }
+  case 0xE0: {
+    const uint8_t op = bus_.read(pc_++);
+    const uint8_t result = x_ - op;
+    if (x_ >= op) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    set_zn_(result);
     break;
   }
   case 0xEA: {
