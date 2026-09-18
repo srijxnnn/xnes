@@ -50,6 +50,15 @@ void CPU::step() {
     break;
   }
 
+  // STX Absolute
+  case 0x8E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    bus_.write((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo),
+               x_);
+    break;
+  }
+
   // LDY #Immediate
   case 0xA0: {
     const uint8_t op = bus_.read(pc_++);
@@ -59,6 +68,34 @@ void CPU::step() {
   }
 
   /* ======== TRANSFER ======== */
+
+  // TAX
+  case 0xAA: {
+    x_ = a_;
+    set_zn_(x_);
+    break;
+  }
+
+  // TXA
+  case 0x8A: {
+    a_ = x_;
+    set_zn_(a_);
+    break;
+  }
+
+  // TAY
+  case 0xA8: {
+    y_ = a_;
+    set_zn_(y_);
+    break;
+  }
+
+  // TYA
+  case 0x98: {
+    a_ = y_;
+    set_zn_(a_);
+    break;
+  }
 
   /* ======== ARITHMETIC ======== */
 
@@ -77,6 +114,52 @@ void CPU::step() {
           1;
     a_ = static_cast<uint8_t>(result);
     set_zn_(a_);
+    break;
+  }
+
+  // SBC #Immediate
+  case 0xE9: {
+    const uint8_t op = ~bus_.read(pc_++);
+    const uint16_t result = a_ + op + (p_ & 0x01);
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
+  // INX
+  case 0xE8: {
+    x_++;
+    set_zn_(x_);
+    break;
+  }
+
+  // DEX
+  case 0xCA: {
+    x_--;
+    set_zn_(x_);
+    break;
+  }
+
+  // INY
+  case 0xC8: {
+    y_++;
+    set_zn_(y_);
+    break;
+  }
+
+  // DEY
+  case 0x88: {
+    y_--;
+    set_zn_(y_);
     break;
   }
 
@@ -292,6 +375,13 @@ void CPU::step() {
   case 0x28: {
     const uint8_t status = bus_.read(0x0100 | ++sp_);
     p_ = (status & 0xCF) | (p_ & (~0xCF));
+    break;
+  }
+
+  // TSX
+  case 0xBA: {
+    x_ = sp_;
+    set_zn_(x_);
     break;
   }
 
