@@ -28,6 +28,24 @@ void CPU::step() {
     break;
   }
 
+  // LDA Absolute
+  case 0xAD: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    a_ =
+        bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    set_zn_(a_);
+    break;
+  }
+
+  // LDA Zero Page
+  case 0xA5: {
+    const uint8_t zp = bus_.read(pc_++);
+    a_ = bus_.read(static_cast<uint16_t>(zp));
+    set_zn_(a_);
+    break;
+  }
+
   // STA Zero Page
   case 0x85: {
     const uint8_t zp = bus_.read(pc_++);
@@ -39,6 +57,16 @@ void CPU::step() {
   case 0xA2: {
     const uint8_t op = bus_.read(pc_++);
     x_ = op;
+    set_zn_(x_);
+    break;
+  }
+
+  // LDX Absolute
+  case 0xAE: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    x_ =
+        bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
     set_zn_(x_);
     break;
   }
@@ -164,6 +192,46 @@ void CPU::step() {
   }
 
   /* ======== SHIFT ======== */
+
+  // ASL Accumulator
+  case 0x0A: {
+    p_ &= ~(p_ & 0x01);
+    p_ |= ((a_ & 0x80) >> 7);
+    a_ <<= 1;
+    set_zn_(a_);
+    break;
+  }
+
+  // LSR Accumulator
+  case 0x4A: {
+    p_ &= ~(p_ & 0x01);
+    p_ |= (a_ & 0x01);
+    a_ >>= 1;
+    set_zn_(a_);
+    break;
+  }
+
+  // ROL Accumulator
+  case 0x2A: {
+    uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (a_ & 0x80) >> 7;
+    a_ <<= 1;
+    a_ |= old_p & 0x01;
+    set_zn_(a_);
+    break;
+  }
+
+  // ROR Accumulator
+  case 0x6A: {
+    uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (a_ & 0x01);
+    a_ >>= 1;
+    a_ |= (old_p & 0x01) << 7;
+    set_zn_(a_);
+    break;
+  }
 
   /* ======== BITWISE ======== */
 
@@ -349,6 +417,18 @@ void CPU::step() {
     break;
   }
 
+  // RTI
+  case 0x40: {
+    const uint8_t status = bus_.read(0x0100 | ++sp_);
+    p_ = (status & 0xCF) | (p_ & (~0xCF));
+
+    const uint8_t lo = bus_.read(0x0100 | ++sp_);
+    const uint8_t hi = bus_.read(0x0100 | ++sp_);
+    pc_ = (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+
+    break;
+  }
+
   /* ======== STACK ======== */
 
   // PHA
@@ -375,6 +455,12 @@ void CPU::step() {
   case 0x28: {
     const uint8_t status = bus_.read(0x0100 | ++sp_);
     p_ = (status & 0xCF) | (p_ & (~0xCF));
+    break;
+  }
+
+  // TXS
+  case 0x9A: {
+    sp_ = x_;
     break;
   }
 
