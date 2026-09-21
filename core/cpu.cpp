@@ -36,12 +36,42 @@ void CPU::step() {
     break;
   }
 
+  // LDA Zero Page,X
+  case 0xB5: {
+    const uint8_t zp = bus_.read(pc_++);
+    a_ = bus_.read(static_cast<uint8_t>(zp + x_));
+    set_zn_(a_);
+    break;
+  }
+
   // LDA Absolute
   case 0xAD: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     a_ =
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    set_zn_(a_);
+    break;
+  }
+
+  // LDA Absolute,X
+  case 0xBD: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    a_ = bus_.read(base + x_);
+    set_zn_(a_);
+    break;
+  }
+
+  // LDA Absolute,Y
+  case 0xB9: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    a_ = bus_.read(base + y_);
     set_zn_(a_);
     break;
   }
@@ -57,10 +87,29 @@ void CPU::step() {
     break;
   }
 
+  // LDA (Indirect),Y
+  case 0xB1: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    a_ = bus_.read(base + y_);
+    set_zn_(a_);
+    break;
+  }
+
   // STA Zero Page
   case 0x85: {
     const uint8_t zp = bus_.read(pc_++);
     bus_.write(zp, a_);
+    break;
+  }
+
+  // STA Zero Page
+  case 0x95: {
+    const uint8_t zp = bus_.read(pc_++);
+    bus_.write(static_cast<uint8_t>(zp + x_), a_);
     break;
   }
 
@@ -73,6 +122,26 @@ void CPU::step() {
     break;
   }
 
+  // STA Absolute,X
+  case 0x9D: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    bus_.write(base + x_, a_);
+    break;
+  }
+
+  // STA Absolute,Y
+  case 0x99: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    bus_.write(base + y_, a_);
+    break;
+  }
+
   // STA (Indirect,X)
   case 0x81: {
     const uint8_t zp = bus_.read(pc_++);
@@ -80,6 +149,17 @@ void CPU::step() {
     const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + x_ + 1));
     bus_.write((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo),
                a_);
+    break;
+  }
+
+  // STA (Indirect),Y
+  case 0x91: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    bus_.write(base + y_, a_);
     break;
   }
 
@@ -96,6 +176,15 @@ void CPU::step() {
     const uint8_t zp = bus_.read(pc_++);
     x_ = bus_.read(zp);
     set_zn_(x_);
+    break;
+  }
+
+  // LDX Zero Page,Y
+  case 0xB6: {
+    const uint8_t zp = bus_.read(pc_++);
+    x_ = bus_.read(static_cast<uint8_t>(zp + y_));
+    set_zn_(x_);
+    break;
   }
 
   // LDX Absolute
@@ -108,10 +197,28 @@ void CPU::step() {
     break;
   }
 
+  // LDX Absolute,Y
+  case 0xBE: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    x_ = bus_.read(base + y_);
+    set_zn_(x_);
+    break;
+  }
+
   // STX Zero Page
   case 0x86: {
     const uint8_t zp = bus_.read(pc_++);
     bus_.write(zp, x_);
+    break;
+  }
+
+  // STX Zero Page,Y
+  case 0x96: {
+    const uint8_t zp = bus_.read(pc_++);
+    bus_.write(static_cast<uint8_t>(zp + y_), x_);
     break;
   }
 
@@ -140,6 +247,14 @@ void CPU::step() {
     break;
   }
 
+  // LDY Zero Page,X
+  case 0xB4: {
+    const uint8_t zp = bus_.read(pc_++);
+    y_ = bus_.read(static_cast<uint8_t>(zp + x_));
+    set_zn_(y_);
+    break;
+  }
+
   // LDY Absolute
   case 0xAC: {
     const uint8_t lo = bus_.read(pc_++);
@@ -150,10 +265,28 @@ void CPU::step() {
     break;
   }
 
+  // LDY Absolute,X
+  case 0xBC: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    y_ = bus_.read(base + x_);
+    set_zn_(y_);
+    break;
+  }
+
   // STY Zero Page
   case 0x84: {
     const uint8_t zp = bus_.read(pc_++);
     bus_.write(zp, y_);
+    break;
+  }
+
+  // STY Zero Page,X
+  case 0x94: {
+    const uint8_t zp = bus_.read(pc_++);
+    bus_.write(static_cast<uint8_t>(zp + x_), y_);
     break;
   }
 
@@ -236,12 +369,78 @@ void CPU::step() {
     break;
   }
 
+  // ADC Zero Page,X
+  case 0x75: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    const uint16_t result = a_ + op + (p_ & 0x01);
+
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
   // ADC Absolute
   case 0x6D: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     const uint8_t op =
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    const uint16_t result = a_ + op + (p_ & 0x01);
+
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
+  // ADC Absolute,X
+  case 0x7D: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + x_);
+    const uint16_t result = a_ + op + (p_ & 0x01);
+
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
+  // ADC Absolute,Y
+  case 0x79: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + y_);
     const uint16_t result = a_ + op + (p_ & 0x01);
 
     if (result > 0xFF) {
@@ -265,6 +464,30 @@ void CPU::step() {
     const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + x_ + 1));
     const uint8_t op =
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    const uint16_t result = a_ + op + (p_ & 0x01);
+
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
+  // ADC (Indirect),Y
+  case 0x71: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + y_);
     const uint16_t result = a_ + op + (p_ & 0x01);
 
     if (result > 0xFF) {
@@ -318,12 +541,75 @@ void CPU::step() {
     break;
   }
 
+  // SBC Zero Page,X
+  case 0xF5: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t op = ~bus_.read(static_cast<uint8_t>(zp + x_));
+    const uint16_t result = a_ + op + (p_ & 0x01);
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
   // SBC Absolute
   case 0xED: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     const uint8_t op = ~bus_.read((static_cast<uint16_t>(hi) << 8) |
                                   static_cast<uint16_t>(lo));
+    const uint16_t result = a_ + op + (p_ & 0x01);
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
+  // SBC Absolute,X
+  case 0xFD: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = ~bus_.read(base + x_);
+    const uint16_t result = a_ + op + (p_ & 0x01);
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
+  // SBC Absolute,Y
+  case 0xF9: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = ~bus_.read(base + y_);
     const uint16_t result = a_ + op + (p_ & 0x01);
     if (result > 0xFF) {
       p_ |= 0x01;
@@ -361,6 +647,29 @@ void CPU::step() {
     break;
   }
 
+  // SBC (Indirect),Y
+  case 0xF1: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = ~bus_.read(base + y_);
+    const uint16_t result = a_ + op + (p_ & 0x01);
+    if (result > 0xFF) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    p_ &= ~0x40;
+    p_ |= ((a_ ^ static_cast<uint8_t>(result)) &
+           (op ^ static_cast<uint8_t>(result)) & 0x80) >>
+          1;
+    a_ = static_cast<uint8_t>(result);
+    set_zn_(a_);
+    break;
+  }
+
   // INC Zero Page
   case 0xE6: {
     const uint8_t zp = bus_.read(pc_++);
@@ -371,12 +680,84 @@ void CPU::step() {
     break;
   }
 
+  // INC Zero Page,X
+  case 0xF6: {
+    const uint8_t zp = bus_.read(pc_++);
+    uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    op++;
+    bus_.write(zp, op);
+    set_zn_(op);
+    break;
+  }
+
+  // INC Absolute
+  case 0xEE: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr);
+    op++;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
+  // INC Absolute,X
+  case 0xFE: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr + x_);
+    op++;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
   // DEC Zero Page
   case 0xC6: {
     const uint8_t zp = bus_.read(pc_++);
     uint8_t op = bus_.read(zp);
     op--;
     bus_.write(zp, op);
+    set_zn_(op);
+    break;
+  }
+
+  // DEC Zero Page,X
+  case 0xD6: {
+    const uint8_t zp = bus_.read(pc_++);
+    uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    op--;
+    bus_.write(zp, op);
+    set_zn_(op);
+    break;
+  }
+
+  // DEC Absolute
+  case 0xCE: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr);
+    op--;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
+  // DEC Absolute,X
+  case 0xDE: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr + x_);
+    op--;
+    bus_.write(addr, op);
     set_zn_(op);
     break;
   }
@@ -432,6 +813,48 @@ void CPU::step() {
     break;
   }
 
+  // ASL Zero Page,X
+  case 0x16: {
+    const uint8_t zp = bus_.read(pc_++);
+    uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    p_ &= ~(p_ & 0x01);
+    p_ |= ((op & 0x80) >> 7);
+    op <<= 1;
+    bus_.write(zp, op);
+    set_zn_(op);
+    break;
+  }
+
+  // ASL Absolute
+  case 0x0E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr);
+    p_ &= ~(p_ & 0x01);
+    p_ |= ((op & 0x80) >> 7);
+    op <<= 1;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
+  // ASL Absolute
+  case 0x1E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr + x_);
+    p_ &= ~(p_ & 0x01);
+    p_ |= ((op & 0x80) >> 7);
+    op <<= 1;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
   // LSR Accumulator
   case 0x4A: {
     p_ &= ~(p_ & 0x01);
@@ -453,6 +876,18 @@ void CPU::step() {
     break;
   }
 
+  // LSR Zero Page,X
+  case 0x56: {
+    const uint8_t zp = bus_.read(pc_++);
+    uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x01);
+    op >>= 1;
+    bus_.write(zp, op);
+    set_zn_(op);
+    break;
+  }
+
   // LSR Absolute
   case 0x4E: {
     const uint8_t lo = bus_.read(pc_++);
@@ -460,6 +895,21 @@ void CPU::step() {
     const uint16_t addr =
         (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
     uint8_t op = bus_.read(addr);
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x01);
+    op >>= 1;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
+  // LSR Absolute,X
+  case 0x5E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr + x_);
     p_ &= ~(p_ & 0x01);
     p_ |= (op & 0x01);
     op >>= 1;
@@ -493,6 +943,54 @@ void CPU::step() {
     break;
   }
 
+  // ROL Zero Page,X
+  case 0x36: {
+    const uint8_t zp = bus_.read(pc_++);
+    uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    const uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x80) >> 7;
+    op <<= 1;
+    op |= old_p & 0x01;
+    bus_.write(zp, op);
+    set_zn_(op);
+    break;
+  }
+
+  // ROL Absolute
+  case 0x2E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr);
+    const uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x80) >> 7;
+    op <<= 1;
+    op |= old_p & 0x01;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
+  // ROL Absolute,X
+  case 0x3E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr + x_);
+    const uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x80) >> 7;
+    op <<= 1;
+    op |= old_p & 0x01;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
   // ROR Accumulator
   case 0x6A: {
     const uint8_t old_p = p_;
@@ -518,6 +1016,54 @@ void CPU::step() {
     break;
   }
 
+  // ROR Zero Page,X
+  case 0x76: {
+    const uint8_t zp = bus_.read(pc_++);
+    uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    const uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x01);
+    op >>= 1;
+    op |= (old_p & 0x01) << 7;
+    bus_.write(zp, op);
+    set_zn_(op);
+    break;
+  }
+
+  // ROR Absolute
+  case 0x6E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr);
+    const uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x01);
+    op >>= 1;
+    op |= (old_p & 0x01) << 7;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
+  // ROR Absolute,X
+  case 0x7E: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t addr =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    uint8_t op = bus_.read(addr + x_);
+    const uint8_t old_p = p_;
+    p_ &= ~(p_ & 0x01);
+    p_ |= (op & 0x01);
+    op >>= 1;
+    op |= (old_p & 0x01) << 7;
+    bus_.write(addr, op);
+    set_zn_(op);
+    break;
+  }
+
   /* ======== BITWISE ======== */
 
   // AND #Immediate
@@ -537,12 +1083,45 @@ void CPU::step() {
     break;
   }
 
+  // AND Zero Page,X
+  case 0x35: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    a_ &= op;
+    set_zn_(a_);
+    break;
+  }
+
   // AND Absolute
   case 0x2D: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     a_ &=
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    set_zn_(a_);
+    break;
+  }
+
+  // AND Absolute,X
+  case 0x3D: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + x_);
+    a_ &= op;
+    set_zn_(a_);
+    break;
+  }
+
+  // AND Absolute,Y
+  case 0x39: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + y_);
+    a_ &= op;
     set_zn_(a_);
     break;
   }
@@ -554,6 +1133,18 @@ void CPU::step() {
     const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + x_ + 1));
     a_ &=
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    set_zn_(a_);
+    break;
+  }
+
+  // AND (Indirect),Y
+  case 0x31: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    a_ &= bus_.read(base + y_);
     set_zn_(a_);
     break;
   }
@@ -575,12 +1166,45 @@ void CPU::step() {
     break;
   }
 
+  // ORA Zero Page,X
+  case 0x15: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    a_ |= op;
+    set_zn_(a_);
+    break;
+  }
+
   // ORA Absolute
   case 0x0D: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     const uint8_t op =
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    a_ |= op;
+    set_zn_(a_);
+    break;
+  }
+
+  // ORA Absolute,X
+  case 0x1D: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + x_);
+    a_ |= op;
+    set_zn_(a_);
+    break;
+  }
+
+  // ORA Absolute,Y
+  case 0x19: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + y_);
     a_ |= op;
     set_zn_(a_);
     break;
@@ -593,6 +1217,18 @@ void CPU::step() {
     const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + x_ + 1));
     a_ |=
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    set_zn_(a_);
+    break;
+  }
+
+  // ORA (Indirect),Y
+  case 0x11: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    a_ |= bus_.read(base + y_);
     set_zn_(a_);
     break;
   }
@@ -614,12 +1250,45 @@ void CPU::step() {
     break;
   }
 
+  // EOR Zero Page,X
+  case 0x55: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    a_ ^= op;
+    set_zn_(a_);
+    break;
+  }
+
   // EOR Absolute
   case 0x4D: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     a_ ^=
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    set_zn_(a_);
+    break;
+  }
+
+  // EOR Absolute,X
+  case 0x5D: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + x_);
+    a_ ^= op;
+    set_zn_(a_);
+    break;
+  }
+
+  // EOR Absolute,Y
+  case 0x59: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + y_);
+    a_ ^= op;
     set_zn_(a_);
     break;
   }
@@ -631,6 +1300,18 @@ void CPU::step() {
     const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + x_ + 1));
     a_ ^=
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    set_zn_(a_);
+    break;
+  }
+
+  // EOR (Indirect),Y
+  case 0x51: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    a_ ^= bus_.read(base + y_);
     set_zn_(a_);
     break;
   }
@@ -694,12 +1375,60 @@ void CPU::step() {
     break;
   }
 
+  // CMP Zero Page,X
+  case 0xD5: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t op = bus_.read(static_cast<uint8_t>(zp + x_));
+    const uint8_t result = a_ - op;
+    if (a_ >= op) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    set_zn_(result);
+    break;
+  }
+
   // CMP Absolute
   case 0xCD: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
     const uint8_t op =
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    const uint8_t result = a_ - op;
+    if (a_ >= op) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    set_zn_(result);
+    break;
+  }
+
+  // CMP Absolute,X
+  case 0xDD: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + x_);
+    const uint8_t result = a_ - op;
+    if (a_ >= op) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    set_zn_(result);
+    break;
+  }
+
+  // CMP Absolute,Y
+  case 0xD9: {
+    const uint8_t lo = bus_.read(pc_++);
+    const uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + y_);
     const uint8_t result = a_ - op;
     if (a_ >= op) {
       p_ |= 0x01;
@@ -717,6 +1446,24 @@ void CPU::step() {
     const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + x_ + 1));
     const uint8_t op =
         bus_.read((static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo));
+    const uint8_t result = a_ - op;
+    if (a_ >= op) {
+      p_ |= 0x01;
+    } else {
+      p_ &= ~0x01;
+    }
+    set_zn_(result);
+    break;
+  }
+
+  // CMP (Indirect),Y
+  case 0xD1: {
+    const uint8_t zp = bus_.read(pc_++);
+    const uint8_t lo = bus_.read(static_cast<uint8_t>(zp));
+    const uint8_t hi = bus_.read(static_cast<uint8_t>(zp + 1));
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    const uint8_t op = bus_.read(base + y_);
     const uint8_t result = a_ - op;
     if (a_ >= op) {
       p_ |= 0x01;
@@ -893,6 +1640,18 @@ void CPU::step() {
   case 0x4C: {
     const uint8_t lo = bus_.read(pc_++);
     const uint8_t hi = bus_.read(pc_++);
+    pc_ = (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    break;
+  }
+
+  // JMP (Indirect)
+  case 0x6C: {
+    uint8_t lo = bus_.read(pc_++);
+    uint8_t hi = bus_.read(pc_++);
+    const uint16_t base =
+        (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+    lo = bus_.read(base);
+    hi = bus_.read((base & 0xFF00) + static_cast<uint8_t>(base + 1));
     pc_ = (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
     break;
   }
