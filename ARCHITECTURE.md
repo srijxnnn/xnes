@@ -10,18 +10,23 @@ XNES is two halves that meet at a single class, `NES`.
 ```
 core/
   nes/         the console: owns every part, wires them, steps them
-  cpu/         6502, including the unofficial opcodes nestest runs
-  ppu/         scanline renderer, vblank/NMI, sprite-0 hit
-  cartridge/   iNES parsing, NROM
-  bus/         the CPU's $0000-$FFFF
+  cpu/         6502 (cpu.cpp is behaviour, cpu_table.cpp is the decode table)
+  ppu/         registers, sprites, scroll, scanline renderer
+  cartridge/   the parsed iNES image: ROM, work RAM, what the header claims
+  mapper/      how a board maps that image; one subclass per iNES mapper
+  bus/         the two address spaces: cpu_bus and ppu_bus
   controller/  the pad behind $4016/$4017
 ui/
   window       Qt widget: blit the frame, read the keyboard
   main         CLI: play a ROM, trace nestest, or dump a PPM
 ```
 
-Each directory is one class, declared in the header and implemented in the
-`.cpp`. Include paths are rooted at `core/`, which is why they read `cpu/cpu.h`.
+A directory is one concept, declared in a header and implemented in the `.cpp`.
+Include paths are rooted at `core/`, which is why they read `cpu/cpu.h`.
+
+The two buses are the seams. Nothing reaches past them: the CPU only knows
+`CpuBus`, the renderer only knows `PpuBus`, and both buses are the only things
+that know a cartridge exists.
 
 ## The clock
 
@@ -42,11 +47,36 @@ tighter timing.
 
 ## Ownership
 
-`NES` holds every component as a direct member, so the machine is one
-allocation and there is no dynamic wiring. Member order in `nes.h` is
-load-bearing: each component is constructed with references to the ones
-declared before it, hence cartridge before PPU, and bus before CPU. Components
-never own each other; `CpuBus` holds references because `NES` is the owner.
+`NES` owns every component and nothing owns anything else; the buses and the
+PPU hold references because `NES` is the owner. Member order in `nes.h` is
+load-bearing, because each component is constructed from references to the ones
+declared above it: mapper, then PPU bus, then PPU, then CPU bus, then CPU.
+
+The cartridge and mapper are the two exceptions, held by `unique_ptr`. The
+mapper stores a `Cartridge &`, so the cartridge needs an address that does not
+move when the `NES` itself is moved or returned.
+
+Everything that can fail happens in `NES::load`: it parses the image, asks for
+a mapper, and only then constructs an `NES`. The constructor therefore takes
+parts that are already known to be valid and cannot fail, which is why there is
+no half-built console to check for.
+
+## Adding a mapper
+
+This is the one axis the emulator is expected to grow along, so it is the one
+place with a virtual interface.
+
+`Mapper` is the board: it answers CPU reads and writes above `$4020`, CHR reads
+and writes below `$2000`, and reports nametable mirroring. `Cartridge` holds the
+bytes and knows nothing about addresses. To add a board, subclass `Mapper` and
+add one case to `create_mapper`, which is the only function aware of which
+mappers exist. No bus, PPU or CPU code changes.
+
+That interface costs about 15% of throughput, because a CHR read is a virtual
+call and rendering does two per pixel. It is worth measuring before caring:
+Donkey Kong runs at roughly 700 frames a second, twelve times faster than it
+needs to. If it ever does matter, the usual fix is for the mapper to hand the
+renderer a pointer to the current CHR bank instead of answering byte by byte.
 
 ## Where the PPU approximates
 
@@ -62,7 +92,8 @@ mid-line split needs this loop moved into `tick`.
 
 ## Deliberate gaps
 
-Mapper 0 only; `Cartridge::load` rejects anything else rather than
+NROM is the only board implemented, so `create_mapper` returns nullptr for
+anything else and `NES::load` reports the ROM as unloadable rather than
 mis-emulating it. No APU, so `CpuBus` drops the writes it cannot decode and the
 machine stays silent. No save states.
 

@@ -2,9 +2,11 @@
 #define NES_H
 
 #include "bus/cpu_bus.h"
+#include "bus/ppu_bus.h"
 #include "cartridge/cartridge.h"
 #include "controller/controller.h"
 #include "cpu/cpu.h"
+#include "mapper/mapper.h"
 #include "ppu/ppu.h"
 
 #include <filesystem>
@@ -14,9 +16,12 @@
 // talk to this and never assemble the parts themselves.
 class NES {
 public:
+  // Returns nullptr if the file is not a readable iNES image or its board is
+  // not implemented. Everything that can fail happens here, so the constructor
+  // only ever receives parts that are already valid.
   static std::unique_ptr<NES> load(const std::filesystem::path &rom);
 
-  explicit NES(Cartridge cart);
+  NES(std::unique_ptr<Cartridge> cart, std::unique_ptr<Mapper> mapper);
 
   NES(const NES &) = delete;
   NES &operator=(const NES &) = delete;
@@ -39,13 +44,16 @@ public:
   CPU &cpu() { return cpu_; }
 
 private:
-  // Declaration order is construction order: PPU and pads before the bus,
-  // bus before the CPU.
-  Cartridge cart_;
+  // Declaration order is construction order, and each component is built from
+  // references to the ones above it. The cartridge and mapper are held by
+  // pointer so that their addresses do not depend on where this object lives.
+  std::unique_ptr<Cartridge> cart_;
+  std::unique_ptr<Mapper> mapper_;
+  PpuBus ppu_bus_;
   PPU ppu_;
   Controller pad1_;
   Controller pad2_;
-  CpuBus bus_;
+  CpuBus cpu_bus_;
   CPU cpu_;
 };
 

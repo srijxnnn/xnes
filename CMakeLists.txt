@@ -8,9 +8,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(xnes_core
   core/bus/cpu_bus.cpp
+  core/bus/ppu_bus.cpp
   core/cartridge/cartridge.cpp
   core/controller/controller.cpp
   core/cpu/cpu.cpp
+  core/cpu/cpu_table.cpp
+  core/mapper/mapper.cpp
+  core/mapper/nrom.cpp
   core/nes/nes.cpp
   core/ppu/ppu.cpp
 )

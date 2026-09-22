@@ -84,12 +84,18 @@ private:
   bool halted_ = false;
   bool nmi_pending_ = false;
 
+  static uint16_t make16_(uint8_t lo, uint8_t hi) {
+    return static_cast<uint16_t>(static_cast<uint16_t>(hi) << 8 | lo);
+  }
+
   uint16_t resolve_(Mode mode);
   uint16_t read16_(uint16_t addr);
   uint16_t read16_zp_(uint8_t addr);
 
   void push_(uint8_t value);
   uint8_t pull_();
+  void push16_(uint16_t value);
+  uint16_t pull16_();
 
   void set_flag_(uint8_t mask, bool value);
   void set_zn_(uint8_t value);
@@ -97,6 +103,22 @@ private:
   void branch_(bool condition, uint16_t target);
   void add_(uint8_t value);
 
+  void load_(uint8_t &reg, uint16_t addr);
+  void transfer_(uint8_t &dst, uint8_t src);
+
+  // Pushes the return address and flags, blocks further IRQs, and jumps
+  // through `vector`. Shared by BRK and the NMI sequence, which differ only in
+  // the return address and whether the pushed B flag is set.
+  void interrupt_(uint16_t vector, uint16_t ret, uint8_t flags);
+
+  // Read-modify-write: the 6502 reads the operand, transforms it, and writes it
+  // back to the same address. Returns the new value for the flags to use. The
+  // transform is a template parameter rather than an argument so that it
+  // inlines instead of becoming an indirect call on every such instruction.
+  template <uint8_t (CPU::*Op)(uint8_t value)> uint8_t rmw_(uint16_t addr);
+
+  uint8_t increment_(uint8_t value);
+  uint8_t decrement_(uint8_t value);
   uint8_t shift_left_(uint8_t value);
   uint8_t shift_right_(uint8_t value);
   uint8_t rotate_left_(uint8_t value);

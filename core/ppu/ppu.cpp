@@ -30,11 +30,9 @@ void PPU::reset() {
   v_ = 0;
   t_ = 0;
   cycle_ = 0;
-  scanline_ = 261;
+  scanline_ = kPreRenderLine;
   sprite_count_ = 0;
   sprite0_cycle_ = -1;
-  nametable_.fill(0);
-  palette_.fill(0);
   oam_.fill(0);
   pixels_.fill(kRgb[0]);
 }
@@ -45,55 +43,6 @@ bool PPU::take_nmi() {
   }
   nmi_ = false;
   return true;
-}
-
-uint16_t PPU::nt_index_(uint16_t addr) const {
-  addr &= 0x0FFF;
-  switch (cart_.mirror()) {
-  case Mirror::Vertical:
-    return addr & 0x07FF;
-  case Mirror::Horizontal:
-    return static_cast<uint16_t>(((addr >> 1) & 0x0400) | (addr & 0x03FF));
-  case Mirror::Four:
-    return addr;
-  }
-  return addr & 0x07FF;
-}
-
-uint8_t PPU::pal_index_(uint16_t addr) const {
-  addr &= 0x1F;
-  if ((addr & 0x13) == 0x10) {
-    addr &= ~0x10;
-  }
-  return static_cast<uint8_t>(addr);
-}
-
-uint8_t PPU::mem_read_(uint16_t addr) {
-  addr &= 0x3FFF;
-  if (addr < 0x2000) {
-    return cart_.chr_read(addr);
-  }
-  if (addr < 0x3F00) {
-    return nametable_[nt_index_(addr)];
-  }
-  return palette_[pal_index_(addr)];
-}
-
-void PPU::mem_write_(uint16_t addr, uint8_t data) {
-  addr &= 0x3FFF;
-  if (addr < 0x2000) {
-    cart_.chr_write(addr, data);
-    return;
-  }
-  if (addr < 0x3F00) {
-    nametable_[nt_index_(addr)] = data;
-    return;
-  }
-  const uint8_t index = pal_index_(addr);
-  palette_[index] = data;
-  if ((index & 0x03) == 0) {
-    palette_[index ^ 0x10] = data;
-  }
 }
 
 void PPU::increment_x_(uint16_t &v) const {
@@ -165,8 +114,8 @@ void PPU::eval_sprites_(int scanline) {
 
     Sprite &sprite = sprites_[sprite_count_++];
     sprite.x = entry[3];
-    sprite.lo = cart_.chr_read(addr);
-    sprite.hi = cart_.chr_read(addr + 8);
+    sprite.lo = bus_.pattern(addr);
+    sprite.hi = bus_.pattern(addr + 8);
     sprite.attr = entry[2];
     sprite.index = static_cast<uint8_t>(i);
   }
@@ -176,14 +125,14 @@ void PPU::eval_sprites_(int scanline) {
 // selects from it. A real PPU pipelines these reads a tile ahead; doing them
 // per pixel gives the same result because nothing changes mid-scanline.
 PPU::Dot PPU::background_dot_(uint16_t v, int fine_x) {
-  const uint8_t tile = mem_read_(0x2000 | (v & 0x0FFF));
-  const uint8_t attr = mem_read_(0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) |
+  const uint8_t tile = bus_.read(0x2000 | (v & 0x0FFF));
+  const uint8_t attr = bus_.read(0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) |
                                  ((v >> 2) & 0x07));
   const uint16_t pattern = ((ctrl_ & BgPatternHigh) ? 0x1000 : 0) |
                            (static_cast<uint16_t>(tile) << 4) |
                            ((v >> 12) & 7);
-  const uint8_t lo = cart_.chr_read(pattern);
-  const uint8_t hi = cart_.chr_read(pattern + 8);
+  const uint8_t lo = bus_.pattern(pattern);
+  const uint8_t hi = bus_.pattern(pattern + 8);
   const int bit = 7 - fine_x;
 
   Dot dot;
@@ -219,19 +168,19 @@ PPU::SpriteDot PPU::sprite_dot_(int x) const {
 
 uint8_t PPU::colour_of_(const Dot &bg, const SpriteDot &sp) const {
   if (sp.value && (bg.value == 0 || !sp.behind_bg)) {
-    return palette_[0x10 | (sp.palette << 2) | sp.value] & 0x3F;
+    return bus_.colour(0x10 | (sp.palette << 2) | sp.value);
   }
   if (bg.value) {
-    return palette_[(bg.palette << 2) | bg.value] & 0x3F;
+    return bus_.colour((bg.palette << 2) | bg.value);
   }
-  return palette_[0] & 0x3F;
+  return bus_.colour(0);
 }
 
 void PPU::render_scanline_(int y) {
   sprite0_cycle_ = -1;
 
   if (!rendering_()) {
-    const uint32_t backdrop = kRgb[palette_[0] & 0x3F];
+    const uint32_t backdrop = kRgb[bus_.colour(0)];
     for (int x = 0; x < kWidth; x++) {
       pixels_[y * kWidth + x] = backdrop;
     }
@@ -338,10 +287,10 @@ uint8_t PPU::cpu_read(uint16_t addr) {
   // buffered.
   case 7: {
     uint8_t value = data_buffer_;
-    data_buffer_ = mem_read_(v_);
+    data_buffer_ = bus_.read(v_);
     if ((v_ & 0x3FFF) >= 0x3F00) {
       value = data_buffer_;
-      data_buffer_ = mem_read_(v_ - 0x1000);
+      data_buffer_ = bus_.read(v_ - 0x1000);
     }
     v_ += (ctrl_ & AddrStep32) ? 32 : 1;
     return value;
@@ -396,7 +345,7 @@ void PPU::cpu_write(uint16_t addr, uint8_t data) {
     }
     break;
   case 7:
-    mem_write_(v_, data);
+    bus_.write(v_, data);
     v_ += (ctrl_ & AddrStep32) ? 32 : 1;
     break;
   }

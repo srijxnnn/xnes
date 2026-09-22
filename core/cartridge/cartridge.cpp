@@ -20,16 +20,6 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
     return std::nullopt;
   }
 
-  int mapper = header[6] >> 4;
-  if ((header[7] & 0x0C) == 0x08) {
-    mapper |= (header[7] & 0xF0) | (static_cast<int>(header[8] & 0x0F) << 8);
-  } else if ((header[7] & 0x0C) == 0x00) {
-    mapper |= header[7] & 0xF0;
-  }
-  if (mapper != 0) {
-    return std::nullopt;
-  }
-
   const std::size_t prg_size = static_cast<std::size_t>(header[4]) * 16384;
   const std::size_t chr_size = static_cast<std::size_t>(header[5]) * 8192;
   if (prg_size == 0) {
@@ -37,6 +27,18 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
   }
 
   Cartridge cart;
+
+  // The mapper number is split across the header, and iNES 2.0 adds a third
+  // nibble. Whether the board is supported is decided by create_mapper, not
+  // here: this function only reports what the file claims.
+  cart.mapper_id_ = header[6] >> 4;
+  if ((header[7] & 0x0C) == 0x08) {
+    cart.mapper_id_ |=
+        (header[7] & 0xF0) | (static_cast<int>(header[8] & 0x0F) << 8);
+  } else if ((header[7] & 0x0C) == 0x00) {
+    cart.mapper_id_ |= header[7] & 0xF0;
+  }
+
   if (header[6] & 0x08) {
     cart.mirror_ = Mirror::Four;
   } else if (header[6] & 0x01) {
@@ -59,6 +61,7 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
     return std::nullopt;
   }
 
+  // A zero CHR size means the board carries CHR RAM instead of ROM.
   if (chr_size == 0) {
     cart.chr_.assign(8192, 0);
     cart.chr_ram_ = true;
@@ -72,30 +75,4 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
   }
 
   return cart;
-}
-
-uint8_t Cartridge::cpu_read(uint16_t addr) const {
-  if (addr >= 0x8000) {
-    return prg_[(addr - 0x8000) & (prg_.size() - 1)];
-  }
-  if (addr >= 0x6000) {
-    return prg_ram_[addr - 0x6000];
-  }
-  return 0;
-}
-
-void Cartridge::cpu_write(uint16_t addr, uint8_t data) {
-  if (addr >= 0x6000 && addr < 0x8000) {
-    prg_ram_[addr - 0x6000] = data;
-  }
-}
-
-uint8_t Cartridge::chr_read(uint16_t addr) const {
-  return chr_[addr & (chr_.size() - 1)];
-}
-
-void Cartridge::chr_write(uint16_t addr, uint8_t data) {
-  if (chr_ram_) {
-    chr_[addr & (chr_.size() - 1)] = data;
-  }
 }

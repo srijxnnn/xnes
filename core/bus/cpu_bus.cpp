@@ -14,8 +14,9 @@ uint8_t CpuBus::read(uint16_t addr) {
     return pad2_.read();
   }
   if (addr >= 0x4020) {
-    return cart_.cpu_read(addr);
+    return mapper_.cpu_read(addr);
   }
+  // The APU lives in the gap. Reads there come back as 0.
   return 0;
 }
 
@@ -29,11 +30,7 @@ void CpuBus::write(uint16_t addr, uint8_t data) {
     return;
   }
   if (addr == 0x4014) {
-    const uint16_t page = static_cast<uint16_t>(data) << 8;
-    for (int i = 0; i < 256; i++) {
-      ppu_.oam_write(read(page + static_cast<uint16_t>(i)));
-    }
-    stall_ += 513;
+    oam_dma_(data);
     return;
   }
   if (addr == 0x4016) {
@@ -42,6 +39,15 @@ void CpuBus::write(uint16_t addr, uint8_t data) {
     return;
   }
   if (addr >= 0x4020) {
-    cart_.cpu_write(addr, data);
+    mapper_.cpu_write(addr, data);
   }
+  // Anything left is the APU, which is dropped, so the machine stays silent.
+}
+
+void CpuBus::oam_dma_(uint8_t page) {
+  const uint16_t base = static_cast<uint16_t>(page) << 8;
+  for (int i = 0; i < 256; i++) {
+    ppu_.oam_write(read(base + static_cast<uint16_t>(i)));
+  }
+  stall_ += 513;
 }

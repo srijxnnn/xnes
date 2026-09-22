@@ -1,20 +1,22 @@
 #ifndef PPU_H
 #define PPU_H
 
-#include "cartridge/cartridge.h"
+#include "bus/ppu_bus.h"
 
 #include <array>
 #include <cstdint>
 
-// Scanline PPU. Dots are counted so NMI and sprite-0 land on the right cycle;
-// pixels for a scanline are produced from the registers at the start of that
-// line, which is enough for Donkey Kong's status-bar split.
+// Scanline PPU: the registers at $2000-$2007, the sprite and scroll state, and
+// the renderer. Its memory lives behind PpuBus. Dots are counted so NMI and
+// sprite-0 land on the right cycle; pixels for a scanline are produced from the
+// registers at the start of that line, which is enough for Donkey Kong's
+// status-bar split.
 class PPU {
 public:
   static constexpr int kWidth = 256;
   static constexpr int kHeight = 240;
 
-  explicit PPU(Cartridge &cart) : cart_(cart) {}
+  explicit PPU(PpuBus &bus) : bus_(bus) {}
 
   void reset();
   void tick();
@@ -83,10 +85,8 @@ private:
     bool is_sprite0 = false;
   };
 
-  Cartridge &cart_;
+  PpuBus &bus_;
 
-  std::array<uint8_t, 4096> nametable_{};
-  std::array<uint8_t, 32> palette_{};
   std::array<uint8_t, 256> oam_{};
   std::array<uint32_t, kWidth * kHeight> pixels_{};
   std::array<Sprite, kSpritesPerLine> sprites_{};
@@ -104,16 +104,12 @@ private:
   uint16_t t_ = 0;
 
   int cycle_ = 0;
-  int scanline_ = 261;
+  int scanline_ = kPreRenderLine;
   int sprite_count_ = 0;
   int sprite0_cycle_ = -1;
   uint64_t frame_ = 0;
 
   bool rendering_() const { return (mask_ & (ShowBg | ShowSprites)) != 0; }
-  uint16_t nt_index_(uint16_t addr) const;
-  uint8_t pal_index_(uint16_t addr) const;
-  uint8_t mem_read_(uint16_t addr);
-  void mem_write_(uint16_t addr, uint8_t data);
 
   void increment_x_(uint16_t &v) const;
   void increment_y_();
