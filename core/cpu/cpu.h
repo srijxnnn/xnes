@@ -153,7 +153,6 @@ private:
   void ror_a(uint16_t addr);
 
   /* ======== BITWISE ======== */
-  // `and` is a C++ keyword, so this handler can't take the mnemonic.
   void and_op(uint16_t addr);
   void ora(uint16_t addr);
   void eor(uint16_t addr);

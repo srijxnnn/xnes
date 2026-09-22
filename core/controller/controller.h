@@ -3,8 +3,6 @@
 
 #include <cstdint>
 
-// Standard NES pad: a write of 1 then 0 to $4016 latches the eight buttons,
-// and each subsequent read of $4016/$4017 shifts out one bit.
 class Controller {
 public:
   enum Button : uint8_t {

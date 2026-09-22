@@ -1,16 +1,7 @@
-// The 6502 decode table, kept apart from cpu.cpp because it is data rather than
-// logic: it changes when an opcode's timing or addressing mode is corrected,
-// not when an instruction's behaviour is. Defining a static member here still
-// grants access to CPU's private handlers, so nothing has to be made public.
 #include "cpu.h"
 
-// OP is an instruction with fixed timing, OPX one that spends an extra cycle
-// when indexing crosses a page boundary. Unofficial mnemonics carry a leading
-// '*', the notation nestest.log uses.
-#define OP(name, fn, mode, cycles)                                             \
-  {name, &CPU::fn, Mode::mode, cycles, false}
-#define OPX(name, fn, mode, cycles)                                            \
-  {name, &CPU::fn, Mode::mode, cycles, true}
+#define OP(name, fn, mode, cycles) {name, &CPU::fn, Mode::mode, cycles, false}
+#define OPX(name, fn, mode, cycles) {name, &CPU::fn, Mode::mode, cycles, true}
 
 const CPU::Instruction CPU::table[256] = {
     /* 00 */ OP("BRK", brk, Implied, 7),
