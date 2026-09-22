@@ -15,7 +15,42 @@ XNES is a blazing fast and lightweight NES emulator, written in C++ and uses Qt 
 
 We're actively maintaining this repo. Contributions are welcome.
 
-# Status
+# Installation
+
+You need a C++17 compiler, CMake 3.16 or newer, and Qt 6 Widgets.
+
+```bash
+# Arch
+sudo pacman -S base-devel cmake qt6-base
+# Debian/Ubuntu
+sudo apt install build-essential cmake qt6-base-dev
+# Fedora
+sudo dnf install gcc-c++ cmake qt6-qtbase-devel
+```
+
+Clone this repo, then run the following commands in the repo directory.
+
+```bash
+cmake -S . -B build
+cmake --build build
+./build/xnes [rom path]
+```
+
+The ROM path is optional. Without it the window opens empty and you can pick a file from **File → Load ROM**. Only iNES (`.nes`) images are accepted.
+
+## Controls
+
+| Key | Action |
+| --- | --- |
+| <kbd>Z</kbd> | A |
+| <kbd>X</kbd> | B |
+| <kbd>Shift</kbd> | Select |
+| <kbd>Enter</kbd> | Start |
+| <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | D-pad |
+| <kbd>F5</kbd> | Reset |
+| <kbd>Esc</kbd> | Quit |
+
+# Progress
 
 **CPU**
 
@@ -68,41 +103,6 @@ We're actively maintaining this repo. Contributions are welcome.
 - [ ] Save states
 - [ ] Pause and step
 - [ ] NTSC frame pacing
-
-# Installation
-
-You need a C++17 compiler, CMake 3.16 or newer, and Qt 6 Widgets.
-
-```bash
-# Arch
-sudo pacman -S base-devel cmake qt6-base
-# Debian/Ubuntu
-sudo apt install build-essential cmake qt6-base-dev
-# Fedora
-sudo dnf install gcc-c++ cmake qt6-qtbase-devel
-```
-
-Clone this repo, then run the following commands in the repo directory.
-
-```bash
-cmake -S . -B build
-cmake --build build
-./build/xnes [rom path]
-```
-
-The ROM path is optional. Without it the window opens empty and you can pick a file from **File → Load ROM**. Only iNES (`.nes`) images are accepted.
-
-## Controls
-
-| Key | Action |
-| --- | --- |
-| <kbd>Z</kbd> | A |
-| <kbd>X</kbd> | B |
-| <kbd>Shift</kbd> | Select |
-| <kbd>Enter</kbd> | Start |
-| <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | D-pad |
-| <kbd>F5</kbd> | Reset |
-| <kbd>Esc</kbd> | Quit |
 
 # Contributing
 
