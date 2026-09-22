@@ -17,21 +17,57 @@ We're actively maintaining this repo. Contributions are welcome.
 
 # Status
 
-- [x] 6502 CPU, all 256 opcodes including the unofficial ones
-- [x] Cycle counts with page-crossing penalties
-- [x] NMI and OAM DMA stalls
-- [x] Scanline PPU: background, sprites, sprite 0 hit, overflow flag
-- [x] iNES loader, CHR RAM, horizontal/vertical/four-screen mirroring
+**CPU**
+
+- [x] Official opcodes
+- [x] Unofficial opcodes
+- [x] Cycle counts
+- [x] Page-crossing penalties
+- [x] NMI
+- [x] OAM DMA stall
+- [ ] IRQ
+
+**PPU**
+
+- [x] Background rendering
+- [x] Sprite rendering
+- [x] 8x16 sprites
+- [x] Sprite 0 hit
+- [x] Sprite overflow flag
+- [x] Scrolling
+- [ ] Mid-scanline scroll changes
+- [ ] Greyscale and colour emphasis
+
+**Cartridge**
+
+- [x] iNES header
+- [x] CHR RAM
+- [x] Horizontal and vertical mirroring
+- [x] Four-screen mirroring
 - [x] NROM (mapper 0)
-- [x] Both controller ports
-- [x] Instruction trace window
-- [ ] APU and sound
-- [ ] IRQ sources
-- [ ] MMC1, UxROM, CNROM
-- [ ] Mid-scanline scroll changes (per-scanline splits already work)
-- [ ] NTSC frame pacing, currently a 16 ms Qt timer
-- [ ] Save states and battery-backed save RAM
-- [ ] PAL
+- [ ] MMC1
+- [ ] UxROM
+- [ ] CNROM
+- [ ] Battery-backed save RAM
+
+**Input**
+
+- [x] Standard controller
+- [x] Both ports on the bus
+- [ ] Keys for port 2
+- [ ] Remappable keys
+
+**Frontend**
+
+- [x] Load ROM from the menu
+- [x] ROM path on the command line
+- [x] Integer scaling
+- [x] Reset
+- [x] CPU trace window
+- [ ] Sound
+- [ ] Save states
+- [ ] Pause and step
+- [ ] NTSC frame pacing
 
 # Installation
 
