@@ -31,20 +31,20 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
   // The mapper number is split across the header, and iNES 2.0 adds a third
   // nibble. Whether the board is supported is decided by create_mapper, not
   // here: this function only reports what the file claims.
-  cart.mapper_id_ = header[6] >> 4;
+  cart.mapper_id = header[6] >> 4;
   if ((header[7] & 0x0C) == 0x08) {
-    cart.mapper_id_ |=
+    cart.mapper_id |=
         (header[7] & 0xF0) | (static_cast<int>(header[8] & 0x0F) << 8);
   } else if ((header[7] & 0x0C) == 0x00) {
-    cart.mapper_id_ |= header[7] & 0xF0;
+    cart.mapper_id |= header[7] & 0xF0;
   }
 
   if (header[6] & 0x08) {
-    cart.mirror_ = Mirror::Four;
+    cart.mirror = Mirror::Four;
   } else if (header[6] & 0x01) {
-    cart.mirror_ = Mirror::Vertical;
+    cart.mirror = Mirror::Vertical;
   } else {
-    cart.mirror_ = Mirror::Horizontal;
+    cart.mirror = Mirror::Horizontal;
   }
 
   if (header[6] & 0x04) {
@@ -54,8 +54,8 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
     }
   }
 
-  cart.prg_.resize(prg_size);
-  file.read(reinterpret_cast<char *>(cart.prg_.data()),
+  cart.prg.resize(prg_size);
+  file.read(reinterpret_cast<char *>(cart.prg.data()),
             static_cast<std::streamsize>(prg_size));
   if (file.gcount() != static_cast<std::streamsize>(prg_size)) {
     return std::nullopt;
@@ -63,11 +63,11 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
 
   // A zero CHR size means the board carries CHR RAM instead of ROM.
   if (chr_size == 0) {
-    cart.chr_.assign(8192, 0);
-    cart.chr_ram_ = true;
+    cart.chr.assign(8192, 0);
+    cart.chr_ram = true;
   } else {
-    cart.chr_.resize(chr_size);
-    file.read(reinterpret_cast<char *>(cart.chr_.data()),
+    cart.chr.resize(chr_size);
+    file.read(reinterpret_cast<char *>(cart.chr.data()),
               static_cast<std::streamsize>(chr_size));
     if (file.gcount() != static_cast<std::streamsize>(chr_size)) {
       return std::nullopt;

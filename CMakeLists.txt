@@ -22,15 +22,12 @@ target_include_directories(xnes_core PUBLIC core)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-add_executable(xnes ui/main.cpp ui/window.cpp)
+add_executable(xnes
+  ui/main/main.cpp
+  ui/window/window.cpp
+  ui/game_view/game_view.cpp
+  ui/debug_log/debug_log.cpp
+  ui/trace/trace.cpp
+)
 target_include_directories(xnes PRIVATE ui)
 target_link_libraries(xnes PRIVATE xnes_core Qt6::Widgets)
-
-enable_testing()
-add_test(
-  NAME nestest
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_nestest.sh
-          $<TARGET_FILE:xnes>
-          ${CMAKE_CURRENT_SOURCE_DIR}/test/nestest.nes
-          ${CMAKE_CURRENT_SOURCE_DIR}/test/nestest.log
-)

@@ -18,35 +18,36 @@ std::unique_ptr<NES> NES::load(const std::filesystem::path &rom) {
 }
 
 NES::NES(std::unique_ptr<Cartridge> cart, std::unique_ptr<Mapper> mapper)
-    : cart_(std::move(cart)), mapper_(std::move(mapper)), ppu_bus_(*mapper_),
-      ppu_(ppu_bus_), cpu_bus_(*mapper_, ppu_, pad1_, pad2_), cpu_(cpu_bus_) {
+    : cart(std::move(cart)), mapper(std::move(mapper)),
+      ppu_bus(*this->mapper), ppu(ppu_bus),
+      cpu_bus(*this->mapper, ppu, pad1, pad2), cpu(cpu_bus) {
   reset();
 }
 
 void NES::reset() {
-  ppu_bus_.reset();
-  ppu_.reset();
-  cpu_.reset();
+  ppu_bus.reset();
+  ppu.reset();
+  cpu.reset();
 }
 
 void NES::step() {
-  const int cycles = cpu_.step();
+  const int cycles = cpu.step();
   for (int i = 0; i < cycles * 3; i++) {
-    ppu_.tick();
-    if (ppu_.take_nmi()) {
-      cpu_.nmi();
+    ppu.tick();
+    if (ppu.take_nmi()) {
+      cpu.nmi();
     }
   }
 }
 
 void NES::step_frame() {
-  const uint64_t frame = ppu_.frame();
-  while (ppu_.frame() == frame && !cpu_.halted()) {
+  const uint64_t frame = ppu.frame;
+  while (ppu.frame == frame && !cpu.halted) {
     step();
   }
 }
 
 void NES::set_buttons(uint8_t pad1, uint8_t pad2) {
-  pad1_.set(pad1);
-  pad2_.set(pad2);
+  this->pad1.set(pad1);
+  this->pad2.set(pad2);
 }

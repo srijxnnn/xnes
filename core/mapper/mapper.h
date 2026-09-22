@@ -12,7 +12,7 @@
 // new game is a new subclass rather than an edit to the bus or the PPU.
 class Mapper {
 public:
-  explicit Mapper(Cartridge &cart) : cart_(cart) {}
+  explicit Mapper(Cartridge &cart) : cart(cart) {}
   virtual ~Mapper() = default;
 
   Mapper(const Mapper &) = delete;
@@ -26,10 +26,10 @@ public:
 
   // Boards that switch nametable mirroring at runtime override this. Most just
   // report what the header wired, which is why this is not pure virtual.
-  virtual Mirror mirror() const { return cart_.mirror(); }
+  virtual Mirror mirror() const { return cart.mirror; }
 
 protected:
-  Cartridge &cart_;
+  Cartridge &cart;
 };
 
 // Builds the board the cartridge asks for, or nullptr if it is not implemented.

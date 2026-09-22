@@ -8,11 +8,11 @@
 // when indexing crosses a page boundary. Unofficial mnemonics carry a leading
 // '*', the notation nestest.log uses.
 #define OP(name, fn, mode, cycles)                                             \
-  {name, &CPU::fn##_, Mode::mode, cycles, false}
+  {name, &CPU::fn, Mode::mode, cycles, false}
 #define OPX(name, fn, mode, cycles)                                            \
-  {name, &CPU::fn##_, Mode::mode, cycles, true}
+  {name, &CPU::fn, Mode::mode, cycles, true}
 
-const CPU::Instruction CPU::table_[256] = {
+const CPU::Instruction CPU::table[256] = {
     /* 00 */ OP("BRK", brk, Implied, 7),
     /* 01 */ OP("ORA", ora, IndirectX, 6),
     /* 02 */ OP("*JAM", jam, Implied, 2),
@@ -48,36 +48,36 @@ const CPU::Instruction CPU::table_[256] = {
     /* 1F */ OP("*SLO", slo, AbsoluteX, 7),
 
     /* 20 */ OP("JSR", jsr, Absolute, 6),
-    /* 21 */ OP("AND", and, IndirectX, 6),
+    /* 21 */ OP("AND", and_op, IndirectX, 6),
     /* 22 */ OP("*JAM", jam, Implied, 2),
     /* 23 */ OP("*RLA", rla, IndirectX, 8),
     /* 24 */ OP("BIT", bit, ZeroPage, 3),
-    /* 25 */ OP("AND", and, ZeroPage, 3),
+    /* 25 */ OP("AND", and_op, ZeroPage, 3),
     /* 26 */ OP("ROL", rol, ZeroPage, 5),
     /* 27 */ OP("*RLA", rla, ZeroPage, 5),
     /* 28 */ OP("PLP", plp, Implied, 4),
-    /* 29 */ OP("AND", and, Immediate, 2),
+    /* 29 */ OP("AND", and_op, Immediate, 2),
     /* 2A */ OP("ROL", rol_a, Accumulator, 2),
     /* 2B */ OP("*ANC", anc, Immediate, 2),
     /* 2C */ OP("BIT", bit, Absolute, 4),
-    /* 2D */ OP("AND", and, Absolute, 4),
+    /* 2D */ OP("AND", and_op, Absolute, 4),
     /* 2E */ OP("ROL", rol, Absolute, 6),
     /* 2F */ OP("*RLA", rla, Absolute, 6),
 
     /* 30 */ OP("BMI", bmi, Relative, 2),
-    /* 31 */ OPX("AND", and, IndirectY, 5),
+    /* 31 */ OPX("AND", and_op, IndirectY, 5),
     /* 32 */ OP("*JAM", jam, Implied, 2),
     /* 33 */ OP("*RLA", rla, IndirectY, 8),
     /* 34 */ OP("*NOP", nop_read, ZeroPageX, 4),
-    /* 35 */ OP("AND", and, ZeroPageX, 4),
+    /* 35 */ OP("AND", and_op, ZeroPageX, 4),
     /* 36 */ OP("ROL", rol, ZeroPageX, 6),
     /* 37 */ OP("*RLA", rla, ZeroPageX, 6),
     /* 38 */ OP("SEC", sec, Implied, 2),
-    /* 39 */ OPX("AND", and, AbsoluteY, 4),
+    /* 39 */ OPX("AND", and_op, AbsoluteY, 4),
     /* 3A */ OP("*NOP", nop, Implied, 2),
     /* 3B */ OP("*RLA", rla, AbsoluteY, 7),
     /* 3C */ OPX("*NOP", nop_read, AbsoluteX, 4),
-    /* 3D */ OPX("AND", and, AbsoluteX, 4),
+    /* 3D */ OPX("AND", and_op, AbsoluteX, 4),
     /* 3E */ OP("ROL", rol, AbsoluteX, 7),
     /* 3F */ OP("*RLA", rla, AbsoluteX, 7),
 

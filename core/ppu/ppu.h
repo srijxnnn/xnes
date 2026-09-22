@@ -16,7 +16,7 @@ public:
   static constexpr int kWidth = 256;
   static constexpr int kHeight = 240;
 
-  explicit PPU(PpuBus &bus) : bus_(bus) {}
+  explicit PPU(PpuBus &bus) : bus(bus) {}
 
   void reset();
   void tick();
@@ -26,8 +26,8 @@ public:
   void oam_write(uint8_t data);
 
   bool take_nmi();
-  uint64_t frame() const { return frame_; }
-  const uint32_t *pixels() const { return pixels_.data(); }
+  uint64_t frame = 0;
+  std::array<uint32_t, kWidth * kHeight> pixels{};
 
 private:
   static constexpr int kSpritesPerLine = 8;
@@ -85,47 +85,45 @@ private:
     bool is_sprite0 = false;
   };
 
-  PpuBus &bus_;
+  PpuBus &bus;
 
-  std::array<uint8_t, 256> oam_{};
-  std::array<uint32_t, kWidth * kHeight> pixels_{};
-  std::array<Sprite, kSpritesPerLine> sprites_{};
+  std::array<uint8_t, 256> oam{};
+  std::array<Sprite, kSpritesPerLine> sprites{};
 
-  uint8_t ctrl_ = 0;
-  uint8_t mask_ = 0;
-  uint8_t status_ = 0;
-  uint8_t oam_addr_ = 0;
-  uint8_t data_buffer_ = 0;
-  uint8_t fine_x_ = 0;
-  bool w_ = false;
-  bool nmi_ = false;
+  uint8_t ctrl = 0;
+  uint8_t mask = 0;
+  uint8_t status = 0;
+  uint8_t oam_addr = 0;
+  uint8_t data_buffer = 0;
+  uint8_t fine_x = 0;
+  bool w = false;
+  bool nmi = false;
 
-  uint16_t v_ = 0;
-  uint16_t t_ = 0;
+  uint16_t v = 0;
+  uint16_t t = 0;
 
-  int cycle_ = 0;
-  int scanline_ = kPreRenderLine;
-  int sprite_count_ = 0;
-  int sprite0_cycle_ = -1;
-  uint64_t frame_ = 0;
+  int cycle = 0;
+  int scanline = kPreRenderLine;
+  int sprite_count = 0;
+  int sprite0_cycle = -1;
 
-  bool rendering_() const { return (mask_ & (ShowBg | ShowSprites)) != 0; }
+  bool rendering() const { return (mask & (ShowBg | ShowSprites)) != 0; }
 
-  void increment_x_(uint16_t &v) const;
-  void increment_y_();
-  void copy_x_();
-  void copy_y_();
+  void increment_x(uint16_t &v) const;
+  void increment_y();
+  void copy_x();
+  void copy_y();
 
   // CHR address of one pattern row. In 8x16 mode bit 0 of the tile picks the
   // pattern table and rows 8-15 come from the next tile.
-  uint16_t sprite_pattern_addr_(uint8_t tile, int row) const;
+  uint16_t sprite_pattern_addr(uint8_t tile, int row) const;
 
-  void eval_sprites_(int scanline);
-  void render_scanline_(int y);
+  void eval_sprites(int scanline);
+  void render_scanline(int y);
 
-  Dot background_dot_(uint16_t v, int fine_x);
-  SpriteDot sprite_dot_(int x) const;
-  uint8_t colour_of_(const Dot &bg, const SpriteDot &sp) const;
+  Dot background_dot(uint16_t v, int fine_x);
+  SpriteDot sprite_dot(int x) const;
+  uint8_t colour_of(const Dot &bg, const SpriteDot &sp) const;
 };
 
 #endif

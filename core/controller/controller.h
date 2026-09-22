@@ -18,16 +18,16 @@ public:
     Right = 1 << 7,
   };
 
-  void set(uint8_t buttons) { buttons_ = buttons; }
+  void set(uint8_t value) { buttons = value; }
 
   void write(uint8_t data);
   uint8_t read();
 
 private:
-  uint8_t buttons_ = 0;
-  uint8_t snapshot_ = 0;
-  uint8_t index_ = 0;
-  bool strobe_ = false;
+  uint8_t buttons = 0;
+  uint8_t snapshot = 0;
+  uint8_t index = 0;
+  bool strobe = false;
 };
 
 #endif

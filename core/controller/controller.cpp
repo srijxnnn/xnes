@@ -1,20 +1,20 @@
 #include "controller.h"
 
 void Controller::write(uint8_t data) {
-  const bool strobe = data & 1;
-  if (strobe_ && !strobe) {
-    snapshot_ = buttons_;
-    index_ = 0;
+  const bool next = data & 1;
+  if (strobe && !next) {
+    snapshot = buttons;
+    index = 0;
   }
-  strobe_ = strobe;
+  strobe = next;
 }
 
 uint8_t Controller::read() {
-  if (strobe_) {
-    return buttons_ & 1;
+  if (strobe) {
+    return buttons & 1;
   }
-  if (index_ >= 8) {
+  if (index >= 8) {
     return 1;
   }
-  return (snapshot_ >> index_++) & 1;
+  return (snapshot >> index++) & 1;
 }

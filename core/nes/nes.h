@@ -34,27 +34,30 @@ public:
   // Run until the PPU finishes the current frame.
   void step_frame();
 
+  // The debug trace steps one instruction at a time and stops on this.
+  uint64_t frame() const { return ppu.frame; }
+
   void set_buttons(uint8_t pad1, uint8_t pad2 = 0);
 
-  bool halted() const { return cpu_.halted(); }
+  bool halted() const { return cpu.halted; }
 
-  const uint32_t *pixels() const { return ppu_.pixels(); }
-
-  // The nestest trace needs the registers, and it drives the CPU directly.
-  CPU &cpu() { return cpu_; }
+  const uint32_t *pixels() const { return ppu.pixels.data(); }
 
 private:
   // Declaration order is construction order, and each component is built from
   // references to the ones above it. The cartridge and mapper are held by
   // pointer so that their addresses do not depend on where this object lives.
-  std::unique_ptr<Cartridge> cart_;
-  std::unique_ptr<Mapper> mapper_;
-  PpuBus ppu_bus_;
-  PPU ppu_;
-  Controller pad1_;
-  Controller pad2_;
-  CpuBus cpu_bus_;
-  CPU cpu_;
+  std::unique_ptr<Cartridge> cart;
+  std::unique_ptr<Mapper> mapper;
+  PpuBus ppu_bus;
+  PPU ppu;
+  Controller pad1;
+  Controller pad2;
+  CpuBus cpu_bus;
+
+public:
+  // The debug trace reads the registers. Stepping stays on NES::step.
+  CPU cpu;
 };
 
 #endif

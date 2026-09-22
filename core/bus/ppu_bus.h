@@ -11,7 +11,7 @@
 // the board's mirroring, and $3F00-$3FFF palette RAM with its own folding.
 class PpuBus {
 public:
-  explicit PpuBus(Mapper &mapper) : mapper_(mapper) {}
+  explicit PpuBus(Mapper &mapper) : mapper(mapper) {}
 
   void reset();
 
@@ -20,20 +20,20 @@ public:
 
   // Rendering goes straight at the two things it needs per pixel, because
   // routing them through read() would redo the address decode every time.
-  uint8_t pattern(uint16_t addr) const { return mapper_.chr_read(addr); }
-  uint8_t colour(uint8_t index) const { return palette_[index] & 0x3F; }
+  uint8_t pattern(uint16_t addr) const { return mapper.chr_read(addr); }
+  uint8_t colour(uint8_t index) const { return palette[index] & 0x3F; }
 
 private:
   // Two physical nametables are folded into four slots; four-screen boards
   // carry their own RAM and use all of it, hence 4KB rather than 2KB.
-  uint16_t nametable_index_(uint16_t addr) const;
+  uint16_t nametable_index(uint16_t addr) const;
 
   // $3F10/$3F14/$3F18/$3F1C are aliases of the backdrop at $3F00.
-  static uint8_t palette_index_(uint16_t addr);
+  static uint8_t palette_index(uint16_t addr);
 
-  Mapper &mapper_;
-  std::array<uint8_t, 4096> nametable_{};
-  std::array<uint8_t, 32> palette_{};
+  Mapper &mapper;
+  std::array<uint8_t, 4096> nametable{};
+  std::array<uint8_t, 32> palette{};
 };
 
 #endif

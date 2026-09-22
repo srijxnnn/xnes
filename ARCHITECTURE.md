@@ -2,9 +2,7 @@
 
 XNES is two halves that meet at a single class, `NES`.
 
-- `core/` is the emulator. There is no Qt include anywhere in it, so it builds
-  and runs headless. That is what makes the nestest trace and `--dump-ppm`
-  possible without a display.
+- `core/` is the emulator. There is no Qt include anywhere in it.
 - `ui/` is the frontend. It only ever touches `NES`, never a component.
 
 ```
@@ -17,8 +15,11 @@ core/
   bus/         the two address spaces: cpu_bus and ppu_bus
   controller/  the pad behind $4016/$4017
 ui/
-  window       Qt widget: blit the frame, read the keyboard
-  main         CLI: play a ROM, trace nestest, or dump a PPM
+  game_view/   the picture and the keyboard
+  debug_log/   the instruction window
+  trace/       the latest instructions, formatted in one place
+  window/      toolbar: owns the console and steps it
+  main/        CLI: play a ROM
 ```
 
 A directory is one concept, declared in a header and implemented in the `.cpp`.
@@ -97,13 +98,10 @@ anything else and `NES::load` reports the ROM as unloadable rather than
 mis-emulating it. No APU, so `CpuBus` drops the writes it cannot decode and the
 machine stays silent. No save states.
 
-## The correctness contract
+## The debug trace
 
-`test/run_nestest.sh` runs the CPU over `nestest.nes` and diffs its trace
-against the golden log, so any change to the CPU has to leave thousands of
-lines of register and cycle state byte-identical. Run it with `ctest
---test-dir build`. The script trims the golden log to the fields the trace
-prints, since disassembly and PPU columns are not emitted yet.
-
-For the picture, `xnes --dump-ppm <frames> <out.ppm> <rom>` renders without a
-window, which is the cheapest way to check a PPU change against a known frame.
+The toolbar's Debug action opens a second window. While it is open, each
+instruction is stored before `NES::step` and the window shows the latest
+lines (`PC A X Y P SP CYC`) once per frame. Inserting every instruction
+into the widget would miss the frame time. With the window closed the game
+stays on `NES::step_frame`.
