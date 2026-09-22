@@ -2,6 +2,8 @@
 #include "window/window.h"
 
 #include <QApplication>
+#include <QFile>
+#include <QIcon>
 
 #include <cstdio>
 #include <memory>
@@ -17,7 +19,9 @@ int main(int argc, char *argv[]) {
   }
 
   QApplication app(argc, argv);
-  Window window(std::move(nes));
+  app.setWindowIcon(QIcon(QStringLiteral(":/logo.png")));
+  const QString rom = argc >= 2 ? QFile::decodeName(argv[1]) : QString();
+  Window window(std::move(nes), rom);
   window.show();
   return app.exec();
 }

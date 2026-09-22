@@ -1,44 +1,30 @@
 #include "game_view.h"
 
-#include "controller/controller.h"
+#include "game_settings/bindings.h"
 
 #include <QKeyEvent>
 #include <QPainter>
 
 #include <algorithm>
 
-GameView::GameView(NES *nes, QWidget *parent) : QWidget(parent), nes(nes) {
+GameView::GameView(NES *nes, Bindings *bindings, QWidget *parent)
+    : QWidget(parent), nes(nes), bindings(bindings) {
   setFocusPolicy(Qt::StrongFocus);
   setMinimumSize(PPU::kWidth, PPU::kHeight);
 }
 
 void GameView::set_nes(NES *nes) {
   this->nes = nes;
+  held.clear();
   buttons = 0;
 }
 
-uint8_t GameView::button_for(int key) {
-  switch (key) {
-  case Qt::Key_Z:
-    return Controller::A;
-  case Qt::Key_X:
-    return Controller::B;
-  case Qt::Key_Shift:
-    return Controller::Select;
-  case Qt::Key_Return:
-  case Qt::Key_Enter:
-    return Controller::Start;
-  case Qt::Key_Up:
-    return Controller::Up;
-  case Qt::Key_Down:
-    return Controller::Down;
-  case Qt::Key_Left:
-    return Controller::Left;
-  case Qt::Key_Right:
-    return Controller::Right;
-  default:
-    return 0;
+void GameView::refresh_buttons() {
+  uint8_t mask = 0;
+  for (int key : held) {
+    mask |= bindings->button_for(key);
   }
+  buttons = mask;
 }
 
 void GameView::paintEvent(QPaintEvent *) {
@@ -74,12 +60,14 @@ void GameView::keyPressEvent(QKeyEvent *event) {
     }
     return;
   }
-  buttons |= button_for(event->key());
+  held.insert(event->key());
+  refresh_buttons();
 }
 
 void GameView::keyReleaseEvent(QKeyEvent *event) {
   if (event->isAutoRepeat()) {
     return;
   }
-  buttons &= static_cast<uint8_t>(~button_for(event->key()));
+  held.remove(event->key());
+  refresh_buttons();
 }

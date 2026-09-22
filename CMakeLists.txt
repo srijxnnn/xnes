@@ -26,8 +26,15 @@ add_executable(xnes
   ui/main/main.cpp
   ui/window/window.cpp
   ui/game_view/game_view.cpp
+  ui/game_settings/bindings.cpp
+  ui/game_settings/controller_settings.cpp
   ui/debug_log/debug_log.cpp
   ui/trace/trace.cpp
 )
 target_include_directories(xnes PRIVATE ui)
 target_link_libraries(xnes PRIVATE xnes_core Qt6::Widgets)
+qt_add_resources(xnes "icons"
+  PREFIX "/"
+  BASE "ui/icons"
+  FILES ui/icons/logo.png
+)

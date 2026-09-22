@@ -42,13 +42,18 @@ The ROM path is optional. Without it the window opens empty and you can pick a f
 
 | Key | Action |
 | --- | --- |
-| <kbd>Z</kbd> | A |
-| <kbd>X</kbd> | B |
+| <kbd>W</kbd> | Up |
+| <kbd>A</kbd> | Left |
+| <kbd>S</kbd> | Down |
+| <kbd>D</kbd> | Right |
+| <kbd>L</kbd> | A |
+| <kbd>K</kbd> | B |
 | <kbd>Shift</kbd> | Select |
 | <kbd>Enter</kbd> | Start |
-| <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | D-pad |
 | <kbd>F5</kbd> | Reset |
 | <kbd>Esc</kbd> | Quit |
+
+These are the defaults. Change them from **Game → Controller settings**.
 
 # Progress
 
