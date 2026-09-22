@@ -39,10 +39,10 @@ void GameView::paintEvent(QPaintEvent *) {
                      PPU::kWidth, PPU::kHeight, PPU::kWidth * 4,
                      QImage::Format_ARGB32);
 
-  const int scale =
-      std::max(1, std::min(width() / PPU::kWidth, height() / PPU::kHeight));
-  const int w = PPU::kWidth * scale;
-  const int h = PPU::kHeight * scale;
+  const double scale = std::min(static_cast<double>(width()) / PPU::kWidth,
+                                static_cast<double>(height()) / PPU::kHeight);
+  const int w = static_cast<int>(PPU::kWidth * scale);
+  const int h = static_cast<int>(PPU::kHeight * scale);
   painter.drawImage(QRect((width() - w) / 2, (height() - h) / 2, w, h), frame);
 }
 

@@ -93,7 +93,8 @@ void Window::load_rom() {
 }
 
 void Window::set_rom_title(const QString &path) {
-  setWindowTitle(QFileInfo(path).fileName() + QStringLiteral(" - XNES"));
+  setWindowTitle(QFileInfo(path).completeBaseName() +
+                 QStringLiteral(" - XNES"));
 }
 
 void Window::open_controller() {
