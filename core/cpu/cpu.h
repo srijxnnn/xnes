@@ -98,15 +98,7 @@ private:
   void load(uint8_t &reg, uint16_t addr);
   void transfer(uint8_t &dst, uint8_t src);
 
-  // Pushes the return address and flags, blocks further IRQs, and jumps
-  // through `vector`. Shared by BRK and the NMI sequence, which differ only in
-  // the return address and whether the pushed B flag is set.
   void interrupt(uint16_t vector, uint16_t ret, uint8_t flags);
-
-  // Read-modify-write: the 6502 reads the operand, transforms it, and writes it
-  // back to the same address. Returns the new value for the flags to use. The
-  // transform is a template parameter rather than an argument so that it
-  // inlines instead of becoming an indirect call on every such instruction.
   template <uint8_t (CPU::*Op)(uint8_t value)> uint8_t rmw(uint16_t addr);
 
   uint8_t increment(uint8_t value);

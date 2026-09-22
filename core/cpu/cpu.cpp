@@ -36,7 +36,6 @@ int CPU::step() {
       cycles++;
     }
 
-    // Taken branches bill their own extra cycles from inside the handler.
     (this->*in.exec)(addr);
   }
 
@@ -51,8 +50,6 @@ void CPU::interrupt(uint16_t vector, uint16_t ret, uint8_t flags) {
   pc = read16(vector);
 }
 
-// BRK bills its 7 cycles through the decode table; an NMI has no table row, so
-// it adds them here. The pushed B flag is what tells a handler the two apart.
 void CPU::take_nmi() {
   interrupt(0xFFFA, pc, (p & ~Break) | Unused);
   cycles += 7;

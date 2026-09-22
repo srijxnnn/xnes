@@ -16,7 +16,7 @@ constexpr uint32_t kRgb[64] = {
     0xFFB6EFFF, 0xFFB8B8B8, 0xFF000000, 0xFF000000,
 };
 
-} // namespace
+}
 
 void PPU::reset() {
   ctrl = 0;
@@ -92,14 +92,12 @@ uint16_t PPU::sprite_pattern_addr(uint8_t tile, int row) const {
          static_cast<uint16_t>(row);
 }
 
-// Collects the sprites covering `scanline` and fetches the one pattern row
-// each of them needs, front to back in OAM order.
 void PPU::eval_sprites(int scanline) {
   sprite_count = 0;
   const int height = (ctrl & TallSprites) ? 16 : 8;
 
   for (int i = 0; i < 64; i++) {
-    const uint8_t *entry = &oam[i * 4]; // y - 1, tile, attributes, x
+    const uint8_t *entry = &oam[i * 4];
     const int row = scanline - (static_cast<int>(entry[0]) + 1);
     if (row < 0 || row >= height) {
       continue;
@@ -121,29 +119,22 @@ void PPU::eval_sprites(int scanline) {
   }
 }
 
-// Fetches the tile and attribute `v` points at and returns the pixel `fine_x`
-// selects from it. A real PPU pipelines these reads a tile ahead; doing them
-// per pixel gives the same result because nothing changes mid-scanline.
 PPU::Dot PPU::background_dot(uint16_t v, int fine_x) {
   const uint8_t tile = bus.read(0x2000 | (v & 0x0FFF));
-  const uint8_t attr = bus.read(0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) |
-                                 ((v >> 2) & 0x07));
+  const uint8_t attr =
+      bus.read(0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07));
   const uint16_t pattern = ((ctrl & BgPatternHigh) ? 0x1000 : 0) |
-                           (static_cast<uint16_t>(tile) << 4) |
-                           ((v >> 12) & 7);
+                           (static_cast<uint16_t>(tile) << 4) | ((v >> 12) & 7);
   const uint8_t lo = bus.pattern(pattern);
   const uint8_t hi = bus.pattern(pattern + 8);
   const int bit = 7 - fine_x;
 
   Dot dot;
   dot.value = static_cast<uint8_t>(((hi >> bit) & 1) << 1 | ((lo >> bit) & 1));
-  // One attribute byte covers four tiles; bits 1 and 6 of v pick the quadrant.
   dot.palette = (attr >> (((v >> 4) & 4) | (v & 2))) & AttrPalette;
   return dot;
 }
 
-// Walks the scanline's sprites back to front so the last opaque one written is
-// the frontmost, which for overlapping sprites is the lowest OAM index.
 PPU::SpriteDot PPU::sprite_dot(int x) const {
   SpriteDot dot;
   for (int i = sprite_count - 1; i >= 0; i--) {
@@ -154,8 +145,8 @@ PPU::SpriteDot PPU::sprite_dot(int x) const {
     }
 
     const int bit = (sprite.attr & AttrFlipX) ? offset : (7 - offset);
-    const uint8_t value = static_cast<uint8_t>(
-        ((sprite.hi >> bit) & 1) << 1 | ((sprite.lo >> bit) & 1));
+    const uint8_t value = static_cast<uint8_t>(((sprite.hi >> bit) & 1) << 1 |
+                                               ((sprite.lo >> bit) & 1));
     if (value) {
       dot.value = value;
       dot.palette = sprite.attr & AttrPalette;
@@ -189,14 +180,10 @@ void PPU::render_scanline(int y) {
 
   eval_sprites(y);
 
-  // Local copies: the scanline is drawn in one go, so advancing the real v
-  // here would run ahead of the dot counter in tick().
   uint16_t v = this->v;
   int fine_x = this->fine_x;
 
   for (int x = 0; x < kWidth; x++) {
-    // Both layers can be hidden in the leftmost 8 pixels, which games use to
-    // cover the column that scrolling drags in.
     Dot bg;
     if ((mask & ShowBg) && (x >= 8 || (mask & ShowBgLeft))) {
       bg = background_dot(v, fine_x);
@@ -207,7 +194,6 @@ void PPU::render_scanline(int y) {
       sp = sprite_dot(x);
     }
 
-    // The hit is reported a dot later, and never on the last pixel.
     if (sp.is_sprite0 && bg.value && x != 255 && sprite0_cycle < 0) {
       sprite0_cycle = x + 1;
     }
@@ -228,8 +214,6 @@ void PPU::tick() {
     render_scanline(scanline);
   }
 
-  // render_scanline works out where sprite 0 was hit; the flag is only raised
-  // once the dot counter reaches it, because games poll for exactly that dot.
   if (visible && sprite0_cycle >= 0 && cycle == sprite0_cycle) {
     status |= Sprite0Hit;
     sprite0_cycle = -1;
@@ -247,8 +231,6 @@ void PPU::tick() {
     nmi = false;
   }
 
-  // Scroll reloads happen at fixed dots, which is what makes a mid-frame $2005
-  // write land on the next scanline rather than this one.
   if (rendering() && (visible || scanline == kPreRenderLine)) {
     if (cycle == 256) {
       increment_y();
@@ -272,8 +254,6 @@ void PPU::tick() {
 
 uint8_t PPU::cpu_read(uint16_t addr) {
   switch (addr & 7) {
-  // Reading the status register clears vblank and resets the $2005/$2006 write
-  // latch. The unused low bits read back as stale bus data.
   case 2: {
     const uint8_t result = (status & (VBlank | Sprite0Hit | SpriteOverflow)) |
                            (data_buffer & 0x1F);
@@ -283,8 +263,6 @@ uint8_t PPU::cpu_read(uint16_t addr) {
   }
   case 4:
     return oam[oam_addr];
-  // $2007 reads lag one byte behind, except in palette memory, which is not
-  // buffered.
   case 7: {
     uint8_t value = data_buffer;
     data_buffer = bus.read(v);
@@ -303,12 +281,10 @@ uint8_t PPU::cpu_read(uint16_t addr) {
 void PPU::cpu_write(uint16_t addr, uint8_t data) {
   data_buffer = data;
   switch (addr & 7) {
-  // Enabling NMI while vblank is already up fires one immediately.
   case 0: {
     const bool was_enabled = ctrl & NmiEnable;
     ctrl = data;
-    t = (t & 0xF3FF) |
-         (static_cast<uint16_t>(data & NametableSelect) << 10);
+    t = (t & 0xF3FF) | (static_cast<uint16_t>(data & NametableSelect) << 10);
     if (!was_enabled && (ctrl & NmiEnable) && (status & VBlank)) {
       nmi = true;
     }

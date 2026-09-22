@@ -28,9 +28,6 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
 
   Cartridge cart;
 
-  // The mapper number is split across the header, and iNES 2.0 adds a third
-  // nibble. Whether the board is supported is decided by create_mapper, not
-  // here: this function only reports what the file claims.
   cart.mapper_id = header[6] >> 4;
   if ((header[7] & 0x0C) == 0x08) {
     cart.mapper_id |=
@@ -61,7 +58,6 @@ std::optional<Cartridge> Cartridge::load(const std::filesystem::path &path) {
     return std::nullopt;
   }
 
-  // A zero CHR size means the board carries CHR RAM instead of ROM.
   if (chr_size == 0) {
     cart.chr.assign(8192, 0);
     cart.chr_ram = true;

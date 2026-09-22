@@ -5,8 +5,6 @@
 
 #include <string>
 
-// The debug window is refreshed from this tail once per frame. Inserting
-// every instruction into a text widget cannot finish in 16ms.
 class Trace {
 public:
   void clear();

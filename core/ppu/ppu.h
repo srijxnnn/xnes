@@ -6,11 +6,6 @@
 #include <array>
 #include <cstdint>
 
-// Scanline PPU: the registers at $2000-$2007, the sprite and scroll state, and
-// the renderer. Its memory lives behind PpuBus. Dots are counted so NMI and
-// sprite-0 land on the right cycle; pixels for a scanline are produced from the
-// registers at the start of that line, which is enough for Donkey Kong's
-// status-bar split.
 class PPU {
 public:
   static constexpr int kWidth = 256;
@@ -35,7 +30,7 @@ private:
   static constexpr int kVBlankLine = 241;
   static constexpr int kPreRenderLine = 261;
 
-  enum Ctrl : uint8_t { // $2000
+  enum Ctrl : uint8_t {
     NametableSelect = 0x03,
     AddrStep32 = 0x04,
     SpritePatternHigh = 0x08,
@@ -44,28 +39,26 @@ private:
     NmiEnable = 0x80,
   };
 
-  enum Mask : uint8_t { // $2001
+  enum Mask : uint8_t {
     ShowBgLeft = 0x02,
     ShowSpritesLeft = 0x04,
     ShowBg = 0x08,
     ShowSprites = 0x10,
   };
 
-  enum Status : uint8_t { // $2002
+  enum Status : uint8_t {
     SpriteOverflow = 0x20,
     Sprite0Hit = 0x40,
     VBlank = 0x80,
   };
 
-  enum Attr : uint8_t { // OAM byte 2
+  enum Attr : uint8_t {
     AttrPalette = 0x03,
     AttrBehindBg = 0x20,
     AttrFlipX = 0x40,
     AttrFlipY = 0x80,
   };
 
-  // A sprite already fetched for the current scanline: its pattern bits are
-  // for this line only, so rendering is a shift instead of another CHR read.
   struct Sprite {
     uint8_t x = 0;
     uint8_t lo = 0;
@@ -74,7 +67,6 @@ private:
     uint8_t index = 0;
   };
 
-  // One pattern pixel: a 2-bit colour within `palette`, where 0 is transparent.
   struct Dot {
     uint8_t value = 0;
     uint8_t palette = 0;
@@ -114,8 +106,6 @@ private:
   void copy_x();
   void copy_y();
 
-  // CHR address of one pattern row. In 8x16 mode bit 0 of the tile picks the
-  // pattern table and rows 8-15 come from the next tile.
   uint16_t sprite_pattern_addr(uint8_t tile, int row) const;
 
   void eval_sprites(int scanline);

@@ -16,7 +16,6 @@ uint8_t CpuBus::read(uint16_t addr) {
   if (addr >= 0x4020) {
     return mapper.cpu_read(addr);
   }
-  // The APU lives in the gap. Reads there come back as 0.
   return 0;
 }
 
@@ -41,7 +40,6 @@ void CpuBus::write(uint16_t addr, uint8_t data) {
   if (addr >= 0x4020) {
     mapper.cpu_write(addr, data);
   }
-  // Anything left is the APU, which is dropped, so the machine stays silent.
 }
 
 void CpuBus::oam_dma(uint8_t page) {
