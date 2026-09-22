@@ -24,4 +24,3 @@ cmake -S . -B build
 cmake --build build
 ./build/xnes [rom path]
 ```
-

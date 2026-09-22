@@ -1,0 +1,3 @@
+CompileFlags:
+  # GCC-only flag that Qt6's mkspec adds to every compile command.
+  Remove: [-mno-direct-extern-access]

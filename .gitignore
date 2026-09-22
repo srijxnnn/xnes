@@ -4,3 +4,5 @@
 # build artifacts
 .cache
 build
+compile_commands.json
+test/roms/*
